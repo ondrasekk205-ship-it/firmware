@@ -75,12 +75,14 @@ void InputHandler(void) {
     EscPress = dwLongPress;
     NextPress = dwPressed && !dwLongPress;
     SelPress = selPressed && !selLongPress;
-    LongPress = selLongPress;
 }
 
 void powerOff() {
     digitalWrite(4, LOW);
-    esp_sleep_enable_ext0_wakeup((gpio_num_t)SEL_BTN, LOW);
+    esp_sleep_enable_ext1_wakeup(
+        (1ULL << SEL_BTN) | (1ULL << DW_BTN),
+        ESP_EXT1_WAKEUP_ALL_LOW
+    );
     esp_deep_sleep_start();
 }
 
@@ -108,8 +110,9 @@ void checkReboot() {
         if (millis() - time_count > 500) {
             tft.fillRect(60, 12, 16 * LW, tft.fontHeight(1), bruceConfig.bgColor);
             drawStatusBar();
+        } else {
+            SelPress = true;
         }
-        SelPress = true;
     }
 }
 
