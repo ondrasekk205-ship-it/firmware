@@ -42,6 +42,8 @@ void InputHandler(void) {
     static unsigned long tm = 0;
     static unsigned long dwPressStart = 0;
     static bool dwWasPressed = false;
+    static unsigned long selPressStart = 0;
+    static bool selWasPressed = false;
     if (millis() - tm < 200 && !LongPress) return;
 
     bool selPressed = (digitalRead(SEL_BTN) == LOW);
@@ -53,7 +55,16 @@ void InputHandler(void) {
     } else if (!dwPressed) {
         dwWasPressed = false;
     }
+
+    if (selPressed && !selWasPressed) {
+        selPressStart = millis();
+        selWasPressed = true;
+    } else if (!selPressed) {
+        selWasPressed = false;
+    }
+
     bool dwLongPress = dwWasPressed && (millis() - dwPressStart > 700);
+    bool selLongPress = selWasPressed && (millis() - selPressStart > 3000);
 
     bool anyPressed = selPressed || dwPressed;
     if (anyPressed) tm = millis();
@@ -63,7 +74,8 @@ void InputHandler(void) {
     PrevPress = false;
     EscPress = dwLongPress;
     NextPress = dwPressed && !dwLongPress;
-    SelPress = selPressed;
+    SelPress = selPressed && !selLongPress;
+    LongPress = selLongPress;
 }
 
 void powerOff() {
@@ -88,6 +100,9 @@ void checkReboot() {
                 countDown = (millis() - time_count) / 1000 + 1;
                 tft.printf(" PWR OFF IN %d/3\n", countDown);
                 vTaskDelay(10 / portTICK_RATE_MS);
+                if (countDown >= 3) {
+                    powerOff();
+                }
             }
         }
         if (millis() - time_count > 500) {
