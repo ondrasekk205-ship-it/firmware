@@ -99,4 +99,3 @@ void checkReboot() {
 }
 
 bool isCharging() { return false; }
-Zobrazování položky interface_m5stickcplus2_2btn.zip.
