@@ -44,37 +44,62 @@ void InputHandler(void) {
     static bool dwWasPressed = false;
     static unsigned long selPressStart = 0;
     static bool selWasPressed = false;
+    static unsigned long lastSelRelease = 0;
+    static int selClickCount = 0;
+
     if (millis() - tm < 200 && !LongPress) return;
+
+    AnyKeyPress = false;
+    PrevPress = false;
+    EscPress = false;
+    NextPress = false;
+    SelPress = false;
 
     bool selPressed = (digitalRead(SEL_BTN) == LOW);
     bool dwPressed = (digitalRead(DW_BTN) == LOW);
 
+    // DW tlačítko
     if (dwPressed && !dwWasPressed) {
         dwPressStart = millis();
         dwWasPressed = true;
-    } else if (!dwPressed) {
+    } else if (!dwPressed && dwWasPressed) {
+        unsigned long dwDuration = millis() - dwPressStart;
+        if (dwDuration < 1000) {
+            EscPress = true;
+        } else {
+            PrevPress = true;
+        }
         dwWasPressed = false;
+        dwPressStart = 0;
     }
 
+    // SEL tlačítko
     if (selPressed && !selWasPressed) {
         selPressStart = millis();
         selWasPressed = true;
-    } else if (!selPressed) {
+    } else if (!selPressed && selWasPressed) {
         selWasPressed = false;
+        if (millis() - selPressStart < 500) {
+            selClickCount++;
+            lastSelRelease = millis();
+        }
     }
-
-    bool dwLongPress = dwWasPressed && (millis() - dwPressStart > 700);
-    bool selLongPress = selWasPressed && (millis() - selPressStart > 3000);
 
     bool anyPressed = selPressed || dwPressed;
     if (anyPressed) tm = millis();
     if (anyPressed && wakeUpScreen()) return;
 
     AnyKeyPress = anyPressed;
-    PrevPress = false;
-    EscPress = dwLongPress;
-    NextPress = dwPressed && !dwLongPress;
-    SelPress = selPressed && !selLongPress;
+
+    // Zpracování kliků SEL po 300ms
+    if (selClickCount > 0 && millis() - lastSelRelease > 300) {
+        if (selClickCount == 1) {
+            SelPress = true;
+        } else if (selClickCount >= 2) {
+            NextPress = true;
+        }
+        selClickCount = 0;
+    }
 }
 
 void powerOff() {
