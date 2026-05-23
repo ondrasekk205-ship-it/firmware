@@ -64,10 +64,10 @@ void InputHandler(void) {
         dwWasPressed = true;
     } else if (!dwPressed && dwWasPressed) {
         unsigned long dwDuration = millis() - dwPressStart;
-        if (dwDuration < 1000) {
-            EscPress = true;
+        if (dwDuration < 700) {
+            NextPress = true; // krátký stisk = dolů/doprava
         } else {
-            PrevPress = true;
+            EscPress = true; // dlouhý stisk = zpět
         }
         dwWasPressed = false;
         dwPressStart = 0;
@@ -94,9 +94,9 @@ void InputHandler(void) {
     // Zpracování kliků SEL po 300ms
     if (selClickCount > 0 && millis() - lastSelRelease > 300) {
         if (selClickCount == 1) {
-            SelPress = true;
+            SelPress = true; // jednoklik = potvrzení
         } else if (selClickCount >= 2) {
-            NextPress = true;
+            NextPress = true; // dvojklik = dolů
         }
         selClickCount = 0;
     }
@@ -112,9 +112,9 @@ void powerOff() {
 }
 
 void checkReboot() {
-    int countDown = 0;
     if (digitalRead(SEL_BTN) == LOW) {
         uint32_t time_count = millis();
+        int countDown = 0;
         while (digitalRead(SEL_BTN) == LOW) {
             if (millis() - time_count > 500) {
                 if (countDown == 0) {
